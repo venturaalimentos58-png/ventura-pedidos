@@ -139,20 +139,20 @@
 <script>
 const WHATSAPP = "59894717227";
 const productos = [
-  {cat:"pescados", nombre:"Merluza", precio:495, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Pescadilla calada", precio:460, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Pescadilla de red", precio:480, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Cazón", precio:420, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Corvina", precio:520, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Angelito", precio:400, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Anchoa", precio:400, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Palometa", precio:410, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Lenguado", precio:790, unidad:"kg", paso:0.5},
-  {cat:"pescados", nombre:"Brótola", precio:770, unidad:"kg", paso:0.5},
-  {cat:"mariscos", nombre:"Mix mariscos (paquete 1/2 kg)", precio:325, unidad:"paquete", paso:1},
-  {cat:"mariscos", nombre:"Langostino (caja 2 kg)", precio:1390, unidad:"caja", paso:1},
-  {cat:"mariscos", nombre:"Camarones", precio:500, unidad:"kg", paso:0.5},
-  {cat:"mariscos", nombre:"Calamar entero", precio:340, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Merluza", precio:495, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Pescadilla calada", precio:460, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Pescadilla de red", precio:480, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Cazón", precio:420, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Corvina", precio:520, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Angelito", precio:400, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Anchoa", precio:400, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Palometa", precio:410, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Lenguado", precio:790, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"pescados", nombre:"Brótola", precio:770, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"mariscos", nombre:"Mix mariscos (paquete 1/2 kg)", precio:325, unidad:"paquete", paso:1, disponible:true},
+  {cat:"mariscos", nombre:"Langostino (caja 2 kg)", precio:1390, unidad:"caja", paso:1, disponible:true},
+  {cat:"mariscos", nombre:"Camarones", precio:500, unidad:"kg", paso:0.5, disponible:true},
+  {cat:"mariscos", nombre:"Calamar entero", precio:340, unidad:"kg", paso:0.5, disponible:true},
 ];
 productos.forEach((p,i)=>p.id=i);
 const cant = {};
@@ -167,7 +167,11 @@ function render(){
     const wrap = document.createElement('div');
     wrap.className = 'cat' + (cat==='pescados' ? ' active' : '');
     wrap.dataset.cat = cat;
-    productos.filter(p=>p.cat===cat).forEach(p=>{
+    const items = productos.filter(p=>p.cat===cat && p.disponible);
+    if(items.length===0){
+      wrap.innerHTML = '<div style="color:var(--muted);font-size:13.5px;text-align:center;padding:20px 10px;">No hay variedades disponibles hoy en esta categoría.</div>';
+    }
+    items.forEach(p=>{
       const row = document.createElement('div');
       row.className = 'card';
       row.innerHTML = `
