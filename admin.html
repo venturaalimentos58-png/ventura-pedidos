@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pescadería Ventura — Disponibilidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#212A2E; --surface:#2A363B; --surface-2:#33424A;
+    --accent:#C1432E; --good:#5A9A6F; --warn:#D9A441;
+    --text:#F4EFE6; --muted:#A9BBBE; --line:#3C4B51;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
+  }
+  .brand{font-family:'Fraunces',serif;}
+  header{padding:24px 20px 16px; border-bottom:1px solid var(--line);}
+  header .brand{font-size:20px;font-weight:600;}
+  header .tag{font-size:12.5px;color:var(--muted);margin-top:3px;}
+  main{max-width:640px;margin:0 auto;padding:16px;}
+  fieldset{border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px;}
+  legend{font-family:'Fraunces',serif;font-size:15px;padding:0 6px;}
+  p.help{font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 14px;}
+  ol{font-size:13px;color:var(--muted);line-height:1.7;padding-left:20px;margin:0 0 14px;}
+  input[type=password], input[type=text]{
+    width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-size:14px;font-family:inherit;margin-bottom:10px;
+  }
+  button.primary{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:12px 16px;font-size:14.5px;font-weight:600;font-family:inherit;cursor:pointer;width:100%;}
+  button.primary:disabled{background:#4A5559;color:#8C989B;}
+  h2.cat{font-family:'Fraunces',serif;font-size:16px;margin:22px 0 10px;}
+  .item{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;}
+  .item .name{font-size:14.5px;}
+  .switch{position:relative;width:46px;height:26px;flex:none;}
+  .switch input{opacity:0;width:100%;height:100%;position:absolute;margin:0;cursor:pointer;}
+  .track{position:absolute;inset:0;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;transition:.15s;}
+  .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:.15s;}
+  .switch input:checked + .track{background:rgba(90,154,111,.25);border-color:var(--good);}
+  .switch input:checked + .track .knob{transform:translateX(20px);background:var(--good);}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));z-index:10;}
+  .status{font-size:12.5px;margin-top:8px;text-align:center;min-height:16px;}
+  .status.ok{color:var(--good);} .status.err{color:var(--accent);}
+  a.link{color:var(--muted);font-size:12.5px;}
+  .reset{text-align:center;margin-top:18px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Pescadería Ventura</div>
+  <div class="tag">Disponibilidad de hoy</div>
+</header>
+
+<main>
+  <div id="setup">
+    <fieldset>
+      <legend>Configuración (una sola vez)</legend>
+      <p class="help">Para guardar cambios acá necesitás un token de GitHub de este repositorio. Se guarda solo en este teléfono/navegador, nunca se comparte.</p>
+      <ol>
+        <li>Entrá a github.com → foto de perfil → Settings</li>
+        <li>Developer settings → Fine-grained tokens → Generate new token</li>
+        <li>En "Repository access" elegí solo <b>ventura-pedidos</b></li>
+        <li>En "Permissions" → Contents → <b>Read and write</b></li>
+        <li>Generá el token y pegalo acá abajo</li>
+      </ol>
+      <input type="password" id="token-input" placeholder="Pegá tu token acá (ghp_... o github_pat_...)">
+      <button class="primary" id="save-token">Guardar token</button>
+    </fieldset>
+  </div>
+
+  <div id="panel" style="display:none;">
+    <div id="lista"></div>
+    <div class="reset">
+      <a class="link" href="#" id="borrar-token">Borrar token guardado de este dispositivo</a>
+    </div>
+  </div>
+</main>
+
+<div class="bar" id="bar" style="display:none;">
+  <button class="primary" id="guardar">Guardar cambios</button>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+const OWNER = "venturaalimentos58-png";
+const REPO = "ventura-pedidos";
+const FILE = "disponibilidad.json";
+const CATS = {
+  "Pescados": ["Merluza","Pescadilla calada","Pescadilla de red","Cazón","Corvina","Angelito","Anchoa","Palometa","Lenguado","Brótola"],
+  "Mariscos": ["Mix mariscos (paquete 1/2 kg)","Langostino (caja 2 kg)","Camarones","Calamar entero"]
+};
+
+function getToken(){ return localStorage.getItem('vp_gh_token') || ''; }
+function b64(str){ return btoa(unescape(encodeURIComponent(str))); }
+function fromB64(str){ return decodeURIComponent(escape(atob(str))); }
+
+async function cargarEstado(){
+  try{
+    const r = await fetch('./' + FILE + '?t=' + Date.now());
+    return await r.json();
+  }catch(e){ return {}; }
+}
+
+function renderPanel(estado){
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+  Object.entries(CATS).forEach(([cat, nombres])=>{
+    const h = document.createElement('h2'); h.className='cat'; h.textContent = cat;
+    lista.appendChild(h);
+    nombres.forEach(n=>{
+      const on = estado[n] !== false;
+      const row = document.createElement('div'); row.className = 'item';
+      row.innerHTML = `
+        <div class="name">${n}</div>
+        <label class="switch">
+          <input type="checkbox" data-nombre="${n}" ${on?'checked':''}>
+          <span class="track"><span class="knob"></span></span>
+        </label>`;
+      lista.appendChild(row);
+    });
+  });
+}
+
+async function init(){
+  const token = getToken();
+  if(!token){
+    document.getElementById('setup').style.display = 'block';
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('bar').style.display = 'none';
+    return;
+  }
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('panel').style.display = 'block';
+  document.getElementById('bar').style.display = 'block';
+  const estado = await cargarEstado();
+  renderPanel(estado);
+}
+
+document.getElementById('save-token').addEventListener('click', ()=>{
+  const t = document.getElementById('token-input').value.trim();
+  if(!t) return;
+  localStorage.setItem('vp_gh_token', t);
+  init();
+});
+
+document.getElementById('borrar-token').addEventListener('click', (e)=>{
+  e.preventDefault();
+  localStorage.removeItem('vp_gh_token');
+  init();
+});
+
+document.getElementById('guardar').addEventListener('click', async ()=>{
+  const token = getToken();
+  const status = document.getElementById('status');
+  const btn = document.getElementById('guardar');
+  const nuevoEstado = {};
+  document.querySelectorAll('#lista input[type=checkbox]').forEach(cb=>{
+    nuevoEstado[cb.dataset.nombre] = cb.checked;
+  });
+
+  btn.disabled = true; status.className='status'; status.textContent = 'Guardando...';
+  try{
+    const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`;
+    const getRes = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' }
+    });
+    if(getRes.status === 401){ throw new Error('Token inválido o vencido.'); }
+    if(!getRes.ok){ throw new Error('No se pudo leer el archivo actual.'); }
+    const getData = await getRes.json();
+
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: 'Actualizar disponibilidad',
+        content: b64(JSON.stringify(nuevoEstado, null, 2)),
+        sha: getData.sha,
+        branch: 'main'
+      })
+    });
+    if(putRes.status === 401){ throw new Error('Token inválido o sin permiso de escritura.'); }
+    if(!putRes.ok){ throw new Error('No se pudo guardar (probá de nuevo).'); }
+
+    status.className = 'status ok'; status.textContent = 'Guardado. El catálogo se actualiza en un par de minutos.';
+  }catch(err){
+    status.className = 'status err'; status.textContent = err.message || 'Error al guardar.';
+  }finally{
+    btn.disabled = false;
+  }
+});
+
+init();
+</script>
+</body>
+</html>
