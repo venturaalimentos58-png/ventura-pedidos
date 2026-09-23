@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pescadería Ventura — Pedidos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#212A2E; --surface:#2A363B; --surface-2:#33424A;
+    --accent:#C1432E; --accent-2:#E0714F;
+    --text:#F4EFE6; --muted:#A9BBBE; --line:#3C4B51;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,.brand{font-family:'Fraunces',serif;}
+  header{
+    padding:28px 20px 20px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:14px;
+  }
+  .fish{width:40px;height:40px;flex:none;}
+  .brand-block .brand{font-size:26px;font-weight:600;line-height:1;color:var(--text);}
+  .brand-block .tag{font-size:13px;color:var(--muted);margin-top:4px;}
+  main{max-width:640px;margin:0 auto;padding:0 16px;}
+  .tabs{display:flex;gap:8px;margin:20px 0 14px;position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5;}
+  .tab{
+    flex:1; text-align:center; padding:10px 0; border-radius:10px;
+    border:1px solid var(--line); color:var(--muted); font-weight:600; font-size:14px;
+    background:var(--surface); cursor:pointer; user-select:none;
+  }
+  .tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .cat{display:none;} .cat.active{display:block;}
+  .card{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin-bottom:10px;
+  }
+  .card .name{font-size:15.5px;font-weight:600;}
+  .card .price{color:var(--accent-2);font-size:13.5px;margin-top:3px;font-variant-numeric:tabular-nums;}
+  .stepper{display:flex;align-items:center;gap:10px;flex:none;}
+  .stepper button{
+    width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-size:18px;line-height:1;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .stepper button:active{background:var(--accent);border-color:var(--accent);}
+  .qty{min-width:52px;text-align:center;font-variant-numeric:tabular-nums;font-weight:600;font-size:14px;}
+  fieldset{border:1px solid var(--line);border-radius:14px;padding:14px;margin:22px 0 14px;}
+  legend{font-family:'Fraunces',serif;font-size:15px;padding:0 6px;color:var(--text);}
+  label.field{display:block;margin-bottom:12px;}
+  label.field span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+  input[type=text]{
+    width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-size:15px;font-family:inherit;
+  }
+  input[type=text]::placeholder{color:#7C8E92;}
+  .radio-row{display:flex;gap:10px;flex-wrap:wrap;}
+  .radio-row label{
+    border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13.5px;
+    background:var(--surface-2);cursor:pointer;display:flex;align-items:center;gap:6px;
+  }
+  .radio-row input{accent-color:var(--accent);}
+  #direccionWrap{display:none;margin-top:2px;}
+  .bar{
+    position:fixed;left:0;right:0;bottom:0;background:var(--surface);
+    border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+    display:flex;align-items:center;gap:12px;z-index:10;
+  }
+  .bar .total{flex:1;}
+  .bar .total .lbl{font-size:11.5px;color:var(--muted);}
+  .bar .total .amt{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .bar button{
+    background:var(--accent);color:#fff;border:none;border-radius:11px;
+    padding:14px 18px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;
+  }
+  .bar button:disabled{background:#4A5559;color:#8C989B;cursor:not-allowed;}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="fish" viewBox="0 0 100 100" fill="none" stroke="var(--accent)" stroke-width="3">
+    <path d="M10 50 C25 25, 60 20, 85 35 L95 20 L90 50 L95 80 L85 65 C60 80, 25 75, 10 50 Z"/>
+    <circle cx="30" cy="45" r="4" fill="var(--accent)"/>
+  </svg>
+  <div class="brand-block">
+    <div class="brand">Pescadería Ventura</div>
+    <div class="tag">Del mar a su mesa</div>
+  </div>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-cat="pescados">Pescados</div>
+    <div class="tab" data-cat="mariscos">Mariscos</div>
+  </div>
+
+  <div id="lista"></div>
+
+  <fieldset>
+    <legend>Tus datos</legend>
+    <label class="field">
+      <span>Nombre</span>
+      <input type="text" id="nombre" placeholder="¿A nombre de quién?">
+    </label>
+    <label class="field">
+      <span>Envío o retiro</span>
+      <div class="radio-row">
+        <label><input type="radio" name="envio" value="Retira en local" checked> Retiro en local</label>
+        <label><input type="radio" name="envio" value="Envío a domicilio"> Envío a domicilio</label>
+      </div>
+    </label>
+    <div id="direccionWrap" class="field">
+      <span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;">Dirección</span>
+      <input type="text" id="direccion" placeholder="Calle, número, referencia">
+    </div>
+    <label class="field" style="margin-bottom:0;">
+      <span>Forma de pago</span>
+      <div class="radio-row">
+        <label><input type="radio" name="pago" value="Efectivo" checked> Efectivo</label>
+        <label><input type="radio" name="pago" value="Transferencia"> Transferencia</label>
+      </div>
+    </label>
+  </fieldset>
+  <div class="hint" id="hint">Elegí al menos un producto y completá tu nombre para enviar el pedido.</div>
+</main>
+
+<div class="bar">
+  <div class="total">
+    <div class="lbl">Total</div>
+    <div class="amt" id="total">$0</div>
+  </div>
+  <button id="enviar" disabled>Enviar pedido por WhatsApp</button>
+</div>
+
+<script>
+const WHATSAPP = "59894717227";
+const productos = [
+  {cat:"pescados", nombre:"Merluza", precio:495, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Pescadilla calada", precio:460, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Pescadilla de red", precio:480, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Cazón", precio:420, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Corvina", precio:520, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Angelito", precio:400, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Anchoa", precio:400, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Palometa", precio:410, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Lenguado", precio:790, unidad:"kg", paso:0.5},
+  {cat:"pescados", nombre:"Brótola", precio:770, unidad:"kg", paso:0.5},
+  {cat:"mariscos", nombre:"Mix mariscos (paquete 1/2 kg)", precio:325, unidad:"paquete", paso:1},
+  {cat:"mariscos", nombre:"Langostino (caja 2 kg)", precio:1390, unidad:"caja", paso:1},
+  {cat:"mariscos", nombre:"Camarones", precio:500, unidad:"kg", paso:0.5},
+  {cat:"mariscos", nombre:"Calamar entero", precio:340, unidad:"kg", paso:0.5},
+];
+productos.forEach((p,i)=>p.id=i);
+const cant = {};
+productos.forEach(p=>cant[p.id]=0);
+
+const lista = document.getElementById('lista');
+function fmt(n){ return '$' + Math.round(n).toLocaleString('es-UY'); }
+
+function render(){
+  lista.innerHTML = '';
+  ['pescados','mariscos'].forEach(cat=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'cat' + (cat==='pescados' ? ' active' : '');
+    wrap.dataset.cat = cat;
+    productos.filter(p=>p.cat===cat).forEach(p=>{
+      const row = document.createElement('div');
+      row.className = 'card';
+      row.innerHTML = `
+        <div>
+          <div class="name">${p.nombre}</div>
+          <div class="price">${fmt(p.precio)} / ${p.unidad}</div>
+        </div>
+        <div class="stepper">
+          <button data-act="menos" data-id="${p.id}">−</button>
+          <div class="qty" id="qty-${p.id}">0</div>
+          <button data-act="mas" data-id="${p.id}">+</button>
+        </div>`;
+      wrap.appendChild(row);
+    });
+    lista.appendChild(wrap);
+  });
+}
+render();
+
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.cat').forEach(c=>c.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector('.cat[data-cat="'+tab.dataset.cat+'"]').classList.add('active');
+  });
+});
+
+lista.addEventListener('click', e=>{
+  const btn = e.target.closest('button[data-id]');
+  if(!btn) return;
+  const p = productos.find(p=>p.id==btn.dataset.id);
+  if(btn.dataset.act==='mas') cant[p.id] = +(cant[p.id]+p.paso).toFixed(2);
+  else cant[p.id] = Math.max(0, +(cant[p.id]-p.paso).toFixed(2));
+  document.getElementById('qty-'+p.id).textContent = cant[p.id];
+  actualizar();
+});
+
+document.querySelectorAll('input[name=envio]').forEach(r=>r.addEventListener('change', actualizar));
+document.getElementById('nombre').addEventListener('input', actualizar);
+document.getElementById('direccion').addEventListener('input', actualizar);
+
+function actualizar(){
+  const envio = document.querySelector('input[name=envio]:checked').value;
+  document.getElementById('direccionWrap').style.display = envio.startsWith('Envío') ? 'block' : 'none';
+
+  let total = 0;
+  productos.forEach(p=>{ total += cant[p.id] * p.precio; });
+  document.getElementById('total').textContent = fmt(total);
+
+  const nombre = document.getElementById('nombre').value.trim();
+  const direccion = document.getElementById('direccion').value.trim();
+  const hayProductos = total > 0;
+  const direccionOk = envio==='Retira en local' || direccion.length>0;
+  const valido = hayProductos && nombre.length>0 && direccionOk;
+
+  document.getElementById('enviar').disabled = !valido;
+  document.getElementById('hint').textContent = valido
+    ? 'Listo para enviar.'
+    : 'Elegí al menos un producto y completá tu nombre' + (envio.startsWith('Envío') ? ' y dirección' : '') + ' para enviar el pedido.';
+}
+actualizar();
+
+document.getElementById('enviar').addEventListener('click', ()=>{
+  const nombre = document.getElementById('nombre').value.trim();
+  const envio = document.querySelector('input[name=envio]:checked').value;
+  const direccion = document.getElementById('direccion').value.trim();
+  const pago = document.querySelector('input[name=pago]:checked').value;
+
+  let total = 0;
+  const lineas = [];
+  productos.forEach(p=>{
+    if(cant[p.id] > 0){
+      const sub = cant[p.id]*p.precio;
+      total += sub;
+      lineas.push(`• ${p.nombre} — ${cant[p.id]} ${p.unidad} — ${fmt(sub)}`);
+    }
+  });
+
+  let msg = `🐟 PEDIDO VENTURA PESCADERÍA\n`;
+  msg += `Nombre: ${nombre}\n\n`;
+  msg += `Productos:\n${lineas.join('\n')}\n\n`;
+  if(envio.startsWith('Envío')) msg += `📍 Dirección: ${direccion}\n`;
+  msg += `🚚 ${envio}\n`;
+  msg += `💳 Forma de pago: ${pago}\n`;
+  msg += `💰 Total: ${fmt(total)}`;
+
+  const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+});
+</script>
+</body>
+</html>
