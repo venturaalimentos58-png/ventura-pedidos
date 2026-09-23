@@ -70,7 +70,6 @@
     background:var(--surface-2);cursor:pointer;display:flex;align-items:center;gap:6px;
   }
   .radio-row input{accent-color:var(--accent);}
-  #direccionWrap{display:none;margin-top:2px;}
   .bar{
     position:fixed;left:0;right:0;bottom:0;background:var(--surface);
     border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
@@ -115,16 +114,9 @@
       <input type="text" id="nombre" placeholder="¿A nombre de quién?">
     </label>
     <label class="field">
-      <span>Envío o retiro</span>
-      <div class="radio-row">
-        <label><input type="radio" name="envio" value="Retira en local" checked> Retiro en local</label>
-        <label><input type="radio" name="envio" value="Envío a domicilio"> Envío a domicilio</label>
-      </div>
-    </label>
-    <div id="direccionWrap" class="field">
-      <span style="display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;">Dirección</span>
+      <span>Dirección de entrega</span>
       <input type="text" id="direccion" placeholder="Calle, número, referencia">
-    </div>
+    </label>
     <label class="field" style="margin-bottom:0;">
       <span>Forma de pago</span>
       <div class="radio-row">
@@ -133,7 +125,7 @@
       </div>
     </label>
   </fieldset>
-  <div class="hint" id="hint">Elegí al menos un producto y completá tu nombre para enviar el pedido.</div>
+  <div class="hint" id="hint">Elegí al menos un producto y completá tu nombre y dirección para enviar el pedido.</div>
 </main>
 
 <div class="bar">
@@ -214,14 +206,10 @@ lista.addEventListener('click', e=>{
   actualizar();
 });
 
-document.querySelectorAll('input[name=envio]').forEach(r=>r.addEventListener('change', actualizar));
 document.getElementById('nombre').addEventListener('input', actualizar);
 document.getElementById('direccion').addEventListener('input', actualizar);
 
 function actualizar(){
-  const envio = document.querySelector('input[name=envio]:checked').value;
-  document.getElementById('direccionWrap').style.display = envio.startsWith('Envío') ? 'block' : 'none';
-
   let total = 0;
   productos.forEach(p=>{ total += cant[p.id] * p.precio; });
   document.getElementById('total').textContent = fmt(total);
@@ -229,19 +217,17 @@ function actualizar(){
   const nombre = document.getElementById('nombre').value.trim();
   const direccion = document.getElementById('direccion').value.trim();
   const hayProductos = total > 0;
-  const direccionOk = envio==='Retira en local' || direccion.length>0;
-  const valido = hayProductos && nombre.length>0 && direccionOk;
+  const valido = hayProductos && nombre.length>0 && direccion.length>0;
 
   document.getElementById('enviar').disabled = !valido;
   document.getElementById('hint').textContent = valido
     ? 'Listo para enviar.'
-    : 'Elegí al menos un producto y completá tu nombre' + (envio.startsWith('Envío') ? ' y dirección' : '') + ' para enviar el pedido.';
+    : 'Elegí al menos un producto y completá tu nombre y dirección para enviar el pedido.';
 }
 actualizar();
 
 document.getElementById('enviar').addEventListener('click', ()=>{
   const nombre = document.getElementById('nombre').value.trim();
-  const envio = document.querySelector('input[name=envio]:checked').value;
   const direccion = document.getElementById('direccion').value.trim();
   const pago = document.querySelector('input[name=pago]:checked').value;
 
@@ -258,8 +244,8 @@ document.getElementById('enviar').addEventListener('click', ()=>{
   let msg = `🐟 PEDIDO VENTURA PESCADERÍA\n`;
   msg += `Nombre: ${nombre}\n\n`;
   msg += `Productos:\n${lineas.join('\n')}\n\n`;
-  if(envio.startsWith('Envío')) msg += `📍 Dirección: ${direccion}\n`;
-  msg += `🚚 ${envio}\n`;
+  msg += `📍 Dirección: ${direccion}\n`;
+  msg += `🚚 Envío a domicilio\n`;
   msg += `💳 Forma de pago: ${pago}\n`;
   msg += `💰 Total: ${fmt(total)}`;
 
