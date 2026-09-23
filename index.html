@@ -189,7 +189,14 @@ function render(){
     lista.appendChild(wrap);
   });
 }
-render();
+async function cargarDisponibilidad(){
+  try{
+    const r = await fetch('./disponibilidad.json?t=' + Date.now());
+    const data = await r.json();
+    productos.forEach(p=>{ if(data[p.nombre] === false) p.disponible = false; });
+  }catch(e){ /* si falla, se muestran todos los productos */ }
+}
+cargarDisponibilidad().then(render);
 
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click', ()=>{
